@@ -11,12 +11,17 @@ with zipfile.ZipFile('titanic.zip', 'r') as zip_ref:
 df = pd.read_csv('tested.csv')
 
 # Clean and preprocess the data
+
 # Drop columns that are not needed
+
 df = df.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
 
-# Fill missing values in the 'Age' column with the median age
+# Fill missing values in the 'Age' and 'fare' column with the median age
 median_age = df['Age'].median()
 df['Age'].fillna(median_age, inplace=True)
+
+median_fare = df['Fare'].median()
+df['Fare'].fillna(median_fare, inplace=True)
 
 #replace missing values in embarked
 mode_embarked = df['Embarked'].mode()[0]
@@ -28,7 +33,19 @@ df['Sex'] = df['Sex'].map({'male': 0, 'female': 1})
 # Family size new column
 df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
 
+# new fare column with fare groups
+df['FareNew'] = df['Fare'].round().astype(int)
+bins = [0, 10, 20, 30, 40, 50, 100, 1000]
+labels = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-100', '>100']
+df['FareGroup'] = pd.cut(df['FareNew'], bins=bins, labels=labels)
+
+
 # Analyzzzee
+
+# number of passengers in each passenger class
+
+print("Passenger class counts:\n", df['Pclass'].value_counts())
+
 # Calculate the mean age for male and female passengers
 mean_age_male = df[df['Sex'] == 0]['Age'].mean()
 mean_age_female = df[df['Sex'] == 1]['Age'].mean()
@@ -59,6 +76,7 @@ sns.barplot(x='AgeGroup', y='Survived', data=df)
 plt.title('Survival Rate by Age Group')
 plt.show()
 
-# run this code to save new csv file once satisfied wth cleansing -- df.to_csv('modified.csv', index=False)
+# run code below to save new csv file if need
+# df.to_csv('modified.csv', index=False)
 
 
