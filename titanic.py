@@ -12,7 +12,7 @@ with zipfile.ZipFile('titanic.zip', 'r') as zip_ref:
 # Load the CSV file into a pandas DataFrame
 df = pd.read_csv('tested.csv')
 
-# clean and preprocess the data
+# CLEAN AND PREPROCESS THE DATA
 
 # Drop columns that are not needed
 
@@ -42,7 +42,7 @@ labels = ['0-10', '10-20', '20-30', '30-40', '40-50', '50-100', '>100']
 df['FareGroup'] = pd.cut(df['FareNew'], bins=bins, labels=labels)
 
 
-# Analyzzzee
+# ANALYZE THE DATA
 
 # print the head with the changes in the dataset
 print(df.head())
@@ -69,7 +69,7 @@ mean_age_female = df[df['Sex'] == 1]['Age'].mean()
 print(f"Mean age for male passengers: {mean_age_male:.2f}")
 print(f"Mean age for female passengers: {mean_age_female:.2f}")
 
-
+# plot age distribution
 sns.histplot(df['Age'], kde=False)
 plt.title('Passenger Age Distribution')
 plt.show()
@@ -96,10 +96,21 @@ plt.title('Survival Rate by Age Group')
 plt.show()
 
 
-# survival rate by port they embarked from
+# survival rate by port they mounted from
 sns.barplot(x='Embarked', y='Survived', data=df)
-plt.title('Survival Rate by Embarked')
+plt.title('Survival Rate by Port of Embarkation')
 plt.show()
+
+# correlation between port of embarkation and survival rate + p-value
+embarked_values = df['Embarked'].unique()
+p_values = []
+for value in embarked_values:
+    data = df[df['Embarked'] == value]['Survived']
+    p_value = stats.ttest_1samp(data, df['Survived'].mean())[1]
+    p_values.append(p_value)
+    
+for i in range(len(embarked_values)):
+    print(f"p-value for {embarked_values[i]}: {p_values[i]:.10f}")
 
 # mean survival for each class
 survival_by_class = df.pivot_table(values='Survived', index='Pclass')
@@ -108,15 +119,14 @@ print(survival_by_class)
 # pearson correlation coefficient between SibSp and Parch
 corr = np.corrcoef(df['SibSp'], df['Parch'])[0, 1]
 print(f"Pearson correlation coefficient between SibSp and Parch: {corr:.2f}")
-print("\n")
-# relationship between gender and survival rate with chi-square test
+
+# correlation between gender and survival rate with chi-square test and print p-value
 contingency_table = pd.crosstab(df['Sex'], df['Survived'])
 chi2, p, dof, expected = stats.chi2_contingency(contingency_table)
 
-# p-value
 print("p-value for relationship between gender and survival rate:", p)
 
 # run code below to save new csv file if need
-df.to_csv('modified.csv', index=False)
+# df.to_csv('modified.csv', index=False)
 
 
