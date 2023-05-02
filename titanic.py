@@ -1,7 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 import zipfile
+import scipy.stats as stats
 
 # Extract the zip file
 with zipfile.ZipFile('titanic.zip', 'r') as zip_ref:
@@ -10,13 +12,13 @@ with zipfile.ZipFile('titanic.zip', 'r') as zip_ref:
 # Load the CSV file into a pandas DataFrame
 df = pd.read_csv('tested.csv')
 
-# Clean and preprocess the data
+# clean and preprocess the data
 
 # Drop columns that are not needed
 
-df = df.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
+df = df.drop(['Name', 'Ticket', 'Cabin'], axis=1)
 
-# Fill missing values in the 'Age' and 'fare' column with the median age
+# fill missing values in the 'Age' and 'Fare' column with the median age
 median_age = df['Age'].median()
 df['Age'].fillna(median_age, inplace=True)
 
@@ -27,10 +29,10 @@ df['Fare'].fillna(median_fare, inplace=True)
 mode_embarked = df['Embarked'].mode()[0]
 df['Embarked'].fillna(mode_embarked, inplace=True)
 
-# Convert the 'Sex' column to binary values
+# convert the 'Sex' column to binary values
 df['Sex'] = df['Sex'].map({'male': 0, 'female': 1})
 
-# Family size new column
+# family size new column
 df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
 
 # new fare column with fare groups
@@ -42,41 +44,79 @@ df['FareGroup'] = pd.cut(df['FareNew'], bins=bins, labels=labels)
 
 # Analyzzzee
 
+# print the head with the changes in the dataset
+print(df.head())
+
 # number of passengers in each passenger class
 
 print("Passenger class counts:\n", df['Pclass'].value_counts())
 
-# Calculate the mean age for male and female passengers
+# number of passengers by sex and plot the data
+
+passengers_by_sex = df.groupby('Sex')['PassengerId'].count()
+
+print("Passengers by sex:\n",  df.groupby('Sex')['PassengerId'].count())
+
+sns.barplot(x=passengers_by_sex.index, y=passengers_by_sex.values)
+plt.title('Number of Passengers by Sex')
+plt.xlabel('Sex')
+plt.ylabel('Count')
+plt.show()
+
+# calculate the mean age for male and female passengers
 mean_age_male = df[df['Sex'] == 0]['Age'].mean()
 mean_age_female = df[df['Sex'] == 1]['Age'].mean()
 print(f"Mean age for male passengers: {mean_age_male:.2f}")
 print(f"Mean age for female passengers: {mean_age_female:.2f}")
-print(df.head())
+
+
 sns.histplot(df['Age'], kde=False)
 plt.title('Passenger Age Distribution')
 plt.show()
 
-# Show the survival rate by passenger class
+# show the survival rate by passenger class
 sns.barplot(x='Pclass', y='Survived', data=df)
 plt.title('Survival Rate by Passenger Class')
 plt.show()
 
-# Show survival rate by family size
+
+
+# show survival rate by family size
 sns.barplot(x='FamilySize', y='Survived', data=df)
 plt.title('Survival Rate by Family Size')
 plt.show()
 
-# Create age groups
+# create age groups and survival rate per age groups
 bins = [0, 12, 18, 30, 50, 80]
 labels = ['Child', 'Teenager', 'Young Adult', 'Adult', 'Senior']
 df['AgeGroup'] = pd.cut(df['Age'], bins=bins, labels=labels)
 
-# Show the survival rate by age group
 sns.barplot(x='AgeGroup', y='Survived', data=df)
 plt.title('Survival Rate by Age Group')
 plt.show()
 
+
+# survival rate by port they embarked from
+sns.barplot(x='Embarked', y='Survived', data=df)
+plt.title('Survival Rate by Embarked')
+plt.show()
+
+# mean survival for each class
+survival_by_class = df.pivot_table(values='Survived', index='Pclass')
+print(survival_by_class)
+
+# pearson correlation coefficient between SibSp and Parch
+corr = np.corrcoef(df['SibSp'], df['Parch'])[0, 1]
+print(f"Pearson correlation coefficient between SibSp and Parch: {corr:.2f}")
+print("\n")
+# relationship between gender and survival rate with chi-square test
+contingency_table = pd.crosstab(df['Sex'], df['Survived'])
+chi2, p, dof, expected = stats.chi2_contingency(contingency_table)
+
+# p-value
+print("p-value for relationship between gender and survival rate:", p)
+
 # run code below to save new csv file if need
-# df.to_csv('modified.csv', index=False)
+df.to_csv('modified.csv', index=False)
 
 
